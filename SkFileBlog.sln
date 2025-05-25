@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SK_FileBlog", "SK_FileBlog\SK_FileBlog.csproj", "{22F4E077-AB9B-47EE-A949-D8691FCDD5A2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkFileBlog", "SkFileBlog\SkFileBlog.csproj", "{22F4E077-AB9B-47EE-A949-D8691FCDD5A2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
