@@ -4,7 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <RootNamespace>SK_FileBlog</RootNamespace>
+        <RootNamespace>SkFileBlog</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,11 +20,6 @@
       <Folder Include="Features\Auth\Register\" />
       <Folder Include="Features\Media\List\" />
       <Folder Include="Features\Media\Upload\" />
-      <Folder Include="Features\Posts\Create\" />
-      <Folder Include="Features\Posts\Get\" />
-      <Folder Include="Features\Posts\List\" />
-      <Folder Include="Infrastructure\" />
-      <Folder Include="Shared\" />
     </ItemGroup>
 
 </Project>
