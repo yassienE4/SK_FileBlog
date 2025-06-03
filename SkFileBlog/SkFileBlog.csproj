@@ -15,4 +15,16 @@
       <PackageReference Include="YamlDotNet" Version="16.3.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Features\Auth\Login\" />
+      <Folder Include="Features\Auth\Register\" />
+      <Folder Include="Features\Media\List\" />
+      <Folder Include="Features\Media\Upload\" />
+      <Folder Include="Features\Posts\Create\" />
+      <Folder Include="Features\Posts\Get\" />
+      <Folder Include="Features\Posts\List\" />
+      <Folder Include="Infrastructure\" />
+      <Folder Include="Shared\" />
+    </ItemGroup>
+
 </Project>
