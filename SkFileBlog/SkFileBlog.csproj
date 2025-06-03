@@ -7,4 +7,9 @@
         <RootNamespace>SK_FileBlog</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.0-preview.4.25258.110" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0-preview.4.25258.110" />
+    </ItemGroup>
+
 </Project>
