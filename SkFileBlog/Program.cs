@@ -1,9 +1,18 @@
 using System.Text;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using SkFileBlog.Features.Posts;
+using SkFileBlog.Features.Posts.Create;
+using SkFileBlog.Features.Posts.Get;
+using SkFileBlog.Features.Posts.List;
+using SkFileBlog.Features.Posts.Update;
+using SkFileBlog.Features.Posts.Delete;
 using SkFileBlog.Infrastructure.Authentication;
 using SkFileBlog.Infrastructure.FileSystem;
 using SkFileBlog.Infrastructure.Markdown;
+using SkFileBlog.Shared.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +24,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSingleton<IFileSystemService, FileSystemService>();
 builder.Services.AddSingleton<IMarkdownProcessor, MarkdownProcessor>();
 builder.Services.AddScoped<BlogPostProcessor>();
+
+// Register blog post services
+builder.Services.AddScoped<MetadataHelper>();
+builder.Services.AddScoped<PostService>();
+
+// Register validation
+builder.Services.AddValidatorsFromAssemblyContaining<CreatePostValidator>();
 
 // Register authentication services
 builder.Services.AddSingleton<JwtProvider>();
@@ -80,33 +96,39 @@ app.UseAuthorization();
 // Map controllers
 app.MapControllers();
 
-// Example minimal API endpoints
+// Map blog post endpoints
+app.MapCreatePostEndpoint();
+app.MapGetPostEndpoint();
+app.MapListPostsEndpoint();
+app.MapUpdatePostEndpoint();
+app.MapDeletePostEndpoint();
+
+// Auth endpoints
+app.MapPost("/api/auth/login", async ([FromBody] LoginRequest request, 
+                                   [FromServices] UserService userService) =>
+{
+    var token = await userService.AuthenticateAsync(request.Username, request.Password);
+    
+    if (token == null)
+    {
+        return Results.Unauthorized();
+    }
+    
+    return Results.Ok(new { Token = token });
+})
+.WithName("Login")
+.Produces<object>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status401Unauthorized);
+
+// Public endpoints
 app.MapGet("/", () => "Welcome to SkFileBlog API")
    .WithName("GetWelcomeMessage");
 
-// Public endpoints - no authentication required
-app.MapGet("/posts", () => "List of public blog posts")
-   .WithName("GetPosts");
-
-app.MapGet("/posts/{slug}", (string slug) => $"Blog post: {slug}")
-   .WithName("GetPostBySlug");
-
-// Protected endpoints - authentication required
-app.MapGet("/protected", () => "This endpoint requires authentication")
-   .RequireAuthorization();
-
-// Admin-only endpoints
-app.MapGet("/admin", () => "This endpoint is for admins only")
-   .RequireAuthorization("AdminOnly");
-
-app.MapGet("/author", () => "This endpoint is for authors and admins")
-   .RequireAuthorization("AuthorOrAdmin");
-
-// Auth endpoints
-app.MapPost("/login", () => "Login endpoint - to be implemented")
-   .WithName("Login");
-
-app.MapPost("/register", () => "Register endpoint - to be implemented")
-   .WithName("Register");
-
 app.Run();
+
+// Define login request class for the endpoint
+public class LoginRequest
+{
+    public string Username { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+}

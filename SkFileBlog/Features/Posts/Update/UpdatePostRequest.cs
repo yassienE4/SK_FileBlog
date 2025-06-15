@@ -1,6 +1,6 @@
-namespace SkFileBlog.Features.Posts.Create;
+namespace SkFileBlog.Features.Posts.Update;
 
-public class CreatePostRequest
+public class UpdatePostRequest
 {
     public string Title { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;

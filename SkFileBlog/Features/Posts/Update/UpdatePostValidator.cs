@@ -1,9 +1,10 @@
 using FluentValidation;
-namespace SkFileBlog.Features.Posts.Create;
 
-public class CreatePostValidator : AbstractValidator<CreatePostRequest>
+namespace SkFileBlog.Features.Posts.Update;
+
+public class UpdatePostValidator : AbstractValidator<UpdatePostRequest>
 {
-    public CreatePostValidator()
+    public UpdatePostValidator()
     {
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Title is required")
