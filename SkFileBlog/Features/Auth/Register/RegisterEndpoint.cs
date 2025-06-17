@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using SkFileBlog.Infrastructure.Authentication;
-using System.Security.Claims;
 
 namespace SkFileBlog.Features.Auth.Register;
 
@@ -10,7 +9,7 @@ public static class RegisterEndpoint
     {
         app.MapPost("/api/auth/register", async ([FromBody] RegisterRequest request,
                                             [FromServices] UserService userService,
-                                            [FromServices] ILogger<RegisterEndpoint> logger,
+                                            [FromServices] ILogger<Program> logger,
                                             HttpContext context) =>
         {
             // Check if user creation is restricted to admins
@@ -43,9 +42,6 @@ public static class RegisterEndpoint
                 logger.LogWarning("Failed to create user {Username}", request.Username);
                 return Results.BadRequest("Username already exists or could not create user");
             }
-            
-            // Get the user
-            var user = await userService.GetUserAsync(request.Username);
             
             // Return success
             return Results.Created($"/api/users/{request.Username}", new
