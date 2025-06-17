@@ -2,7 +2,15 @@ using System.Text;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using SkFileBlog.Features.Auth.Login;
+using SkFileBlog.Features.Auth.Profile;
+using SkFileBlog.Features.Auth.Register;
+using SkFileBlog.Features.Media;
+using SkFileBlog.Features.Media.Delete;
+using SkFileBlog.Features.Media.List;
+using SkFileBlog.Features.Media.Upload;
 using SkFileBlog.Features.Posts;
 using SkFileBlog.Features.Posts.Create;
 using SkFileBlog.Features.Posts.Get;
@@ -29,8 +37,11 @@ builder.Services.AddScoped<BlogPostProcessor>();
 builder.Services.AddScoped<MetadataHelper>();
 builder.Services.AddScoped<PostService>();
 
-// Register validation
-builder.Services.AddValidatorsFromAssemblyContaining<CreatePostValidator>();
+// Register media services
+builder.Services.AddScoped<MediaService>();
+
+// Register validation - single call registers all validators in assembly
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // Register authentication services
 builder.Services.AddSingleton<JwtProvider>();
@@ -87,6 +98,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// Serve media files from the content directory
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), builder.Configuration["Blog:ContentRoot"] ?? "BlogContent")),
+    RequestPath = "/media"
+});
+
 app.UseRouting();
 
 // Use authentication and authorization middleware
@@ -103,32 +123,18 @@ app.MapListPostsEndpoint();
 app.MapUpdatePostEndpoint();
 app.MapDeletePostEndpoint();
 
-// Auth endpoints
-app.MapPost("/api/auth/login", async ([FromBody] LoginRequest request, 
-                                   [FromServices] UserService userService) =>
-{
-    var token = await userService.AuthenticateAsync(request.Username, request.Password);
-    
-    if (token == null)
-    {
-        return Results.Unauthorized();
-    }
-    
-    return Results.Ok(new { Token = token });
-})
-.WithName("Login")
-.Produces<object>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status401Unauthorized);
+// Map authentication endpoints
+app.MapLoginEndpoint();
+app.MapRegisterEndpoint();
+app.MapGetProfileEndpoint();
+
+// Map media endpoints
+app.MapUploadMediaEndpoint();
+app.MapListMediaEndpoint();
+app.MapDeleteMediaEndpoint();
 
 // Public endpoints
 app.MapGet("/", () => "Welcome to SkFileBlog API")
    .WithName("GetWelcomeMessage");
 
 app.Run();
-
-// Define login request class for the endpoint
-public class LoginRequest
-{
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-}
