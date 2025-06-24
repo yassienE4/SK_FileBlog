@@ -1,5 +1,6 @@
 using System.Text.Json;
 using SkFileBlog.Infrastructure.FileSystem;
+using SkFileBlog.Infrastructure.UrlManagement;
 using SkFileBlog.Shared.Models;
 using SkFileBlog.Shared.Models.Metadata;
 using SkFileBlog.Shared.Helpers;
@@ -10,15 +11,21 @@ public class PostService
 {
     private readonly IFileSystemService _fileSystem;
     private readonly MetadataHelper _metadataHelper;
+    private readonly UrlService _urlService;       
+    private readonly RedirectService _redirectService;
     private readonly ILogger<PostService> _logger;
     
     public PostService(
         IFileSystemService fileSystem, 
         MetadataHelper metadataHelper,
+        UrlService urlService, 
+        RedirectService redirectService,
         ILogger<PostService> logger)
     {
         _fileSystem = fileSystem;
         _metadataHelper = metadataHelper;
+        _urlService = urlService;
+        _redirectService = redirectService;
         _logger = logger;
     }
     
@@ -35,7 +42,7 @@ public class PostService
             // Generate slug if not provided
             if (string.IsNullOrWhiteSpace(post.Slug))
             {
-                post.Slug = GenerateSlug(post.Title);
+                post.Slug = _urlService.GenerateSlug(post.Title);
             }
             
             // Determine status
@@ -107,7 +114,7 @@ public class PostService
     {
         var siteMetadataPath = _metadataHelper.GetSiteMetadataPath();
         var siteMetadata = await _metadataHelper.ReadMetadataAsync<SiteMetadata>(siteMetadataPath)
-            ?? new SiteMetadata();
+                           ?? new SiteMetadata();
             
         // Update tags
         foreach (var tag in post.Tags)
@@ -371,6 +378,26 @@ public class PostService
             updatedPost.CreatedAt = originalPost.CreatedAt;
             updatedPost.ModifiedAt = DateTime.UtcNow;
             
+            // Check if the slug has changed and needs a redirect
+            var oldSlug = originalPost.Slug;
+            var newSlug = string.IsNullOrWhiteSpace(updatedPost.Slug) 
+                ? _urlService.GenerateSlug(updatedPost.Title) 
+                : updatedPost.Slug;
+                
+            if (_urlService.NeedsRedirect(oldSlug, newSlug))
+            {
+                // Add a redirect from old slug to new slug
+                await _redirectService.AddRedirectAsync(
+                    $"blog/{oldSlug}", 
+                    $"blog/{newSlug}"
+                );
+                
+                _logger.LogInformation("Added redirect from {OldSlug} to {NewSlug}", oldSlug, newSlug);
+            }
+            
+            // Set the new slug
+            updatedPost.Slug = newSlug;
+            
             // If transitioning from Draft to Published, set PublishedAt
             if (originalPost.Status != PublishStatus.Published && 
                 updatedPost.Status == PublishStatus.Published)
@@ -380,12 +407,6 @@ public class PostService
             else
             {
                 updatedPost.PublishedAt = originalPost.PublishedAt;
-            }
-            
-            // Generate slug if not provided
-            if (string.IsNullOrWhiteSpace(updatedPost.Slug))
-            {
-                updatedPost.Slug = GenerateSlug(updatedPost.Title);
             }
             
             // Determine if we need to move the post between directories

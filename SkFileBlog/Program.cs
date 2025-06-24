@@ -20,6 +20,7 @@ using SkFileBlog.Features.Posts.Delete;
 using SkFileBlog.Infrastructure.Authentication;
 using SkFileBlog.Infrastructure.FileSystem;
 using SkFileBlog.Infrastructure.Markdown;
+using SkFileBlog.Infrastructure.UrlManagement;
 using SkFileBlog.Shared.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +33,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSingleton<IFileSystemService, FileSystemService>();
 builder.Services.AddSingleton<IMarkdownProcessor, MarkdownProcessor>();
 builder.Services.AddScoped<BlogPostProcessor>();
+
+// Register URL management services
+builder.Services.AddSingleton<UrlService>();
+builder.Services.AddSingleton<RedirectService>();
 
 // Register blog post services
 builder.Services.AddScoped<MetadataHelper>();
@@ -106,6 +111,9 @@ app.UseStaticFiles(new StaticFileOptions
         Path.Combine(Directory.GetCurrentDirectory(), builder.Configuration["Blog:ContentRoot"] ?? "BlogContent")),
     RequestPath = "/media"
 });
+
+// Use URL redirection middleware
+app.UseUrlRedirects();
 
 app.UseRouting();
 
